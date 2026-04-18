@@ -4,13 +4,12 @@ import { Heart, Users, Search, AlertTriangle, Phone, MapPin } from 'lucide-react
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Hero Section */}
       <div className="bg-blue-600 text-white">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-3xl mx-auto text-center">
             <AlertTriangle className="w-16 h-16 mx-auto mb-4" />
             <h1 className="text-4xl font-bold mb-4">
-              Sistema de Apoio a Emergências em Enchentes
+              Plataforma de Apoio a Emergências em Enchentes
             </h1>
             <p className="text-xl mb-8">
               Conectando pessoas que precisam de ajuda com voluntários dispostos a ajudar
@@ -38,7 +37,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Info Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Como Funciona</h2>
@@ -89,12 +87,10 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
-
-      {/* Categories Section */}
       <div className="bg-gray-50 py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">
-            Principais Categorias de Ajuda
+            Categorias de Ajuda
           </h2>
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {[
@@ -118,7 +114,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Emergency Info */}
       <div className="bg-red-600 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
@@ -141,7 +136,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Stats Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">
@@ -168,14 +162,13 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="bg-gray-800 text-white py-8">
         <div className="container mx-auto px-4 text-center">
           <p className="mb-2">
-            Sistema de Apoio a Emergências em Enchentes
+            SOS Chuva 
           </p>
           <p className="text-gray-400 text-sm">
-            Desenvolvido para ajudar comunidades em momentos de crise
+            Desenvolvido por Ewerton Hecsley para ajudar comunidades em momentos de crise
           </p>
         </div>
       </footer>
