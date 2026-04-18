@@ -1,52 +1,51 @@
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { mockNeeds } from '../data/mockData';
-import { Need, UrgencyLevel } from '../types';
-import { AlertTriangle, Phone, MapPin, Clock, CheckCircle } from 'lucide-react';
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { mockNeeds } from "../data/mockData";
+import { Need, UrgencyLevel } from "../types";
+import { AlertTriangle, Phone, MapPin, Clock, CheckCircle } from "lucide-react";
 
 const urgencyColors: Record<UrgencyLevel, string> = {
-  critical: 'bg-red-100 text-red-800 border-red-300',
-  high: 'bg-orange-100 text-orange-800 border-orange-300',
-  medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  low: 'bg-green-100 text-green-800 border-green-300'
+  critical: "bg-red-100 text-red-800 border-red-300",
+  high: "bg-orange-100 text-orange-800 border-orange-300",
+  medium: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  low: "bg-green-100 text-green-800 border-green-300",
 };
 
 const urgencyLabels: Record<UrgencyLevel, string> = {
-  critical: 'CRÍTICO',
-  high: 'ALTO',
-  medium: 'MÉDIO',
-  low: 'BAIXO'
+  critical: "CRÍTICO",
+  high: "ALTO",
+  medium: "MÉDIO",
+  low: "BAIXO",
 };
 
 export default function VolunteerDashboard() {
   const { user } = useAuth();
   const [needs, setNeeds] = useState<Need[]>(mockNeeds);
-  const [filter, setFilter] = useState<'all' | UrgencyLevel>('all');
+  const [filter, setFilter] = useState<"all" | UrgencyLevel>("all");
   const [selectedNeed, setSelectedNeed] = useState<Need | null>(null);
 
   const filteredNeeds = needs
-    .filter(need => filter === 'all' || need.urgency === filter)
-    .filter(need => need.status === 'pending')
+    .filter((need) => filter === "all" || need.urgency === filter)
+    .filter((need) => need.status === "pending")
     .sort((a, b) => {
       const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
       return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
     });
 
   const handleOfferHelp = (needId: string) => {
-    setNeeds(prev =>
-      prev.map(need =>
+    setNeeds((prev) =>
+      prev.map((need) =>
         need.id === needId
-          ? { ...need, status: 'in-progress', volunteerId: user?.id }
-          : need
-      )
+          ? { ...need, status: "in-progress", volunteerId: user?.id }
+          : need,
+      ),
     );
     setSelectedNeed(null);
-    alert('Você se ofereceu para ajudar! A pessoa será notificada.');
+    alert("Você se ofereceu para ajudar! A pessoa será notificada.");
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-blue-600 text-white py-6 shadow-md">
         <div className="container mx-auto px-4">
           <h1 className="text-2xl font-bold mb-2">Painel do Voluntário</h1>
@@ -55,72 +54,95 @@ export default function VolunteerDashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Stats */}
         <div className="grid md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-4 rounded-lg shadow">
-            <div className="text-2xl font-bold text-blue-600">{needs.filter(n => n.status === 'pending').length}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {needs.filter((n) => n.status === "pending").length}
+            </div>
             <div className="text-sm text-gray-600">Necessidades Ativas</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-red-600">
-              {needs.filter(n => n.urgency === 'critical' && n.status === 'pending').length}
+              {
+                needs.filter(
+                  (n) => n.urgency === "critical" && n.status === "pending",
+                ).length
+              }
             </div>
             <div className="text-sm text-gray-600">Casos Críticos</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-green-600">
-              {needs.filter(n => n.status === 'in-progress' && n.volunteerId === user?.id).length}
+              {
+                needs.filter(
+                  (n) =>
+                    n.status === "in-progress" && n.volunteerId === user?.id,
+                ).length
+              }
             </div>
             <div className="text-sm text-gray-600">Você Está Ajudando</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-purple-600">
-              {needs.filter(n => n.status === 'resolved' && n.volunteerId === user?.id).length}
+              {
+                needs.filter(
+                  (n) => n.status === "resolved" && n.volunteerId === user?.id,
+                ).length
+              }
             </div>
             <div className="text-sm text-gray-600">Ajudas Concluídas</div>
           </div>
         </div>
 
-        {/* Filters */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <h3 className="font-semibold mb-3">Filtrar por Urgência:</h3>
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setFilter('all')}
+              onClick={() => setFilter("all")}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                filter === "all"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 hover:bg-gray-200"
               }`}
             >
               Todas
             </button>
             <button
-              onClick={() => setFilter('critical')}
+              onClick={() => setFilter("critical")}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                filter === 'critical' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-800 hover:bg-red-200'
+                filter === "critical"
+                  ? "bg-red-600 text-white"
+                  : "bg-red-100 text-red-800 hover:bg-red-200"
               }`}
             >
               Crítico
             </button>
             <button
-              onClick={() => setFilter('high')}
+              onClick={() => setFilter("high")}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                filter === 'high' ? 'bg-orange-600 text-white' : 'bg-orange-100 text-orange-800 hover:bg-orange-200'
+                filter === "high"
+                  ? "bg-orange-600 text-white"
+                  : "bg-orange-100 text-orange-800 hover:bg-orange-200"
               }`}
             >
               Alto
             </button>
             <button
-              onClick={() => setFilter('medium')}
+              onClick={() => setFilter("medium")}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                filter === 'medium' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                filter === "medium"
+                  ? "bg-yellow-600 text-white"
+                  : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
               }`}
             >
               Médio
             </button>
             <button
-              onClick={() => setFilter('low')}
+              onClick={() => setFilter("low")}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                filter === 'low' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'
+                filter === "low"
+                  ? "bg-green-600 text-white"
+                  : "bg-green-100 text-green-800 hover:bg-green-200"
               }`}
             >
               Baixo
@@ -128,28 +150,36 @@ export default function VolunteerDashboard() {
           </div>
         </div>
 
-        {/* Needs List */}
         <div className="space-y-4">
-          <h2 className="text-xl font-bold mb-4">Necessidades Disponíveis ({filteredNeeds.length})</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Necessidades Disponíveis ({filteredNeeds.length})
+          </h2>
           {filteredNeeds.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
               Nenhuma necessidade encontrada com este filtro.
             </div>
           ) : (
-            filteredNeeds.map(need => (
-              <div key={need.id} className="bg-white rounded-lg shadow hover:shadow-lg transition">
+            filteredNeeds.map((need) => (
+              <div
+                key={need.id}
+                className="bg-white rounded-lg shadow hover:shadow-lg transition"
+              >
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${urgencyColors[need.urgency]}`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold border ${urgencyColors[need.urgency]}`}
+                        >
                           {urgencyLabels[need.urgency]}
                         </span>
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
                           {need.category}
                         </span>
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">{need.userName}</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        {need.userName}
+                      </h3>
                       <p className="text-gray-700 mb-3">{need.description}</p>
                       <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
@@ -162,7 +192,7 @@ export default function VolunteerDashboard() {
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
-                          {new Date(need.createdAt).toLocaleString('pt-BR')}
+                          {new Date(need.createdAt).toLocaleString("pt-BR")}
                         </div>
                       </div>
                     </div>
@@ -179,18 +209,19 @@ export default function VolunteerDashboard() {
           )}
         </div>
       </div>
-
-      {/* Confirmation Modal */}
       {selectedNeed && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <h3 className="text-xl font-bold mb-4">Confirmar Ajuda</h3>
             <p className="text-gray-700 mb-4">
-              Você está prestes a se oferecer para ajudar <strong>{selectedNeed.userName}</strong> com:
+              Você está prestes a se oferecer para ajudar{" "}
+              <strong>{selectedNeed.userName}</strong> com:
             </p>
             <div className="bg-gray-50 p-4 rounded-lg mb-6">
               <p className="font-semibold mb-2">{selectedNeed.category}</p>
-              <p className="text-sm text-gray-600 mb-3">{selectedNeed.description}</p>
+              <p className="text-sm text-gray-600 mb-3">
+                {selectedNeed.description}
+              </p>
               <div className="space-y-1 text-sm">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gray-500" />

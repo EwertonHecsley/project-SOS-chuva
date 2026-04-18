@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { useAuth } from '../context/AuthContext';
-import { AlertTriangle } from 'lucide-react';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
+import { AlertTriangle } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -16,9 +16,9 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (error) {
-      alert('Erro ao fazer login. Tente novamente.');
+      alert("Erro ao fazer login. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -30,7 +30,9 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <AlertTriangle className="w-12 h-12 text-blue-600 mx-auto mb-4" />
           <h1 className="text-3xl font-bold mb-2">Fazer Login</h1>
-          <p className="text-gray-600">Acesse sua conta para continuar ajudando</p>
+          <p className="text-gray-600">
+            Acesse sua conta para continuar ajudando
+          </p>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-8">
@@ -64,14 +66,17 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
             >
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              Não tem uma conta?{' '}
-              <Link to="/register" className="text-blue-600 hover:underline font-semibold">
+              Não tem uma conta?{" "}
+              <Link
+                to="/register"
+                className="text-blue-600 hover:underline font-semibold"
+              >
                 Cadastre-se aqui
               </Link>
             </p>
@@ -82,13 +87,6 @@ export default function LoginPage() {
               Voltar para a página inicial
             </Link>
           </div>
-        </div>
-
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            <strong>Modo de Demonstração:</strong> Use qualquer email e senha para fazer login.
-            Os dados são salvos localmente apenas para demonstração.
-          </p>
         </div>
       </div>
     </div>

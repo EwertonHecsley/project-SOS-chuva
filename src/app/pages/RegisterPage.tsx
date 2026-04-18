@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
-import { useAuth } from '../context/AuthContext';
-import { UserType } from '../types';
-import { AlertTriangle, Heart, Users } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { useAuth } from "../context/AuthContext";
+import { UserType } from "../types";
+import { AlertTriangle, Heart, Users } from "lucide-react";
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams();
-  const typeParam = searchParams.get('type') as UserType | null;
+  const typeParam = searchParams.get("type") as UserType | null;
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [location, setLocation] = useState('');
-  const [type, setType] = useState<UserType>(typeParam || 'volunteer');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
+  const [type, setType] = useState<UserType>(typeParam || "volunteer");
   const [loading, setLoading] = useState(false);
 
   const { register } = useAuth();
@@ -31,9 +31,9 @@ export default function RegisterPage() {
 
     try {
       await register(name, email, password, phone, type, location);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (error) {
-      alert('Erro ao cadastrar. Tente novamente.');
+      alert("Erro ao cadastrar. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -45,44 +45,56 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <AlertTriangle className="w-12 h-12 text-blue-600 mx-auto mb-4" />
           <h1 className="text-3xl font-bold mb-2">Criar Conta</h1>
-          <p className="text-gray-600">Junte-se a nós no apoio às vítimas de enchentes</p>
+          <p className="text-gray-600">
+            Junte-se a nós no apoio às vítimas de enchentes
+          </p>
         </div>
 
         {/* Type Selection */}
         <div className="grid md:grid-cols-2 gap-4 mb-8">
           <button
             type="button"
-            onClick={() => setType('volunteer')}
+            onClick={() => setType("volunteer")}
             className={`p-6 rounded-lg border-2 transition ${
-              type === 'volunteer'
-                ? 'border-blue-600 bg-blue-50'
-                : 'border-gray-200 hover:border-blue-300'
+              type === "volunteer"
+                ? "border-blue-600 bg-blue-50"
+                : "border-gray-200 hover:border-blue-300"
             }`}
           >
-            <Heart className={`w-8 h-8 mx-auto mb-2 ${type === 'volunteer' ? 'text-blue-600' : 'text-gray-400'}`} />
+            <Heart
+              className={`w-8 h-8 mx-auto mb-2 ${type === "volunteer" ? "text-blue-600" : "text-gray-400"}`}
+            />
             <h3 className="font-semibold mb-1">Sou Voluntário</h3>
-            <p className="text-sm text-gray-600">Quero ajudar pessoas em necessidade</p>
+            <p className="text-sm text-gray-600">
+              Quero ajudar pessoas em necessidade
+            </p>
           </button>
 
           <button
             type="button"
-            onClick={() => setType('need-help')}
+            onClick={() => setType("need-help")}
             className={`p-6 rounded-lg border-2 transition ${
-              type === 'need-help'
-                ? 'border-green-600 bg-green-50'
-                : 'border-gray-200 hover:border-green-300'
+              type === "need-help"
+                ? "border-green-600 bg-green-50"
+                : "border-gray-200 hover:border-green-300"
             }`}
           >
-            <Users className={`w-8 h-8 mx-auto mb-2 ${type === 'need-help' ? 'text-green-600' : 'text-gray-400'}`} />
+            <Users
+              className={`w-8 h-8 mx-auto mb-2 ${type === "need-help" ? "text-green-600" : "text-gray-400"}`}
+            />
             <h3 className="font-semibold mb-1">Preciso de Ajuda</h3>
-            <p className="text-sm text-gray-600">Estou em situação de necessidade</p>
+            <p className="text-sm text-gray-600">
+              Estou em situação de necessidade
+            </p>
           </button>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Nome Completo</label>
+              <label className="block text-sm font-medium mb-2">
+                Nome Completo
+              </label>
               <input
                 type="text"
                 value={name}
@@ -131,7 +143,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Localização</label>
+              <label className="block text-sm font-medium mb-2">
+                Localização
+              </label>
               <input
                 type="text"
                 value={location}
@@ -146,19 +160,22 @@ export default function RegisterPage() {
               type="submit"
               disabled={loading}
               className={`w-full py-3 rounded-lg font-semibold transition disabled:opacity-50 ${
-                type === 'volunteer'
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-green-600 hover:bg-green-700 text-white'
+                type === "volunteer"
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "bg-green-600 hover:bg-green-700 text-white"
               }`}
             >
-              {loading ? 'Cadastrando...' : 'Criar Conta'}
+              {loading ? "Cadastrando..." : "Criar Conta"}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              Já tem uma conta?{' '}
-              <Link to="/login" className="text-blue-600 hover:underline font-semibold">
+              Já tem uma conta?{" "}
+              <Link
+                to="/login"
+                className="text-blue-600 hover:underline font-semibold"
+              >
                 Faça login
               </Link>
             </p>
@@ -169,13 +186,6 @@ export default function RegisterPage() {
               Voltar para a página inicial
             </Link>
           </div>
-        </div>
-
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            <strong>Modo de Demonstração:</strong> Os dados cadastrados são salvos localmente
-            apenas para demonstração. Conecte ao Supabase para persistência real.
-          </p>
         </div>
       </div>
     </div>
