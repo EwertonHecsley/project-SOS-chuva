@@ -1,13 +1,24 @@
 import { Link } from 'react-router';
 import { Heart, Users, Search, AlertTriangle, Phone, MapPin } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="bg-blue-600 text-white">
+      <div className="bg-blue-600 text-white overflow-hidden">
         <div className="container mx-auto px-4 py-16">
-          <div className="max-w-3xl mx-auto text-center">
-            <AlertTriangle className="w-16 h-16 mx-auto mb-4" />
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-3xl mx-auto text-center"
+          >
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+            >
+              <AlertTriangle className="w-16 h-16 mx-auto mb-4" />
+            </motion.div>
             <h1 className="text-4xl font-bold mb-4">
               Plataforma de Apoio a Emergências em Enchentes
             </h1>
@@ -15,25 +26,29 @@ export default function LandingPage() {
               Conectando pessoas que precisam de ajuda com voluntários dispostos a ajudar
             </p>
             <div className="flex gap-4 justify-center">
-              <Link
-                to="/register?type=volunteer"
-                className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
-              >
-                Quero Ser Voluntário
-              </Link>
-              <Link
-                to="/register?type=need-help"
-                className="bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-800 transition border-2 border-white"
-              >
-                Preciso de Ajuda
-              </Link>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/register?type=volunteer"
+                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition shadow-lg block"
+                >
+                  Quero Ser Voluntário
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/register?type=need-help"
+                  className="bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-800 transition border-2 border-white shadow-lg block"
+                >
+                  Preciso de Ajuda
+                </Link>
+              </motion.div>
             </div>
             <div className="mt-6">
               <Link to="/login" className="text-white hover:underline">
                 Já tenho cadastro - Fazer login
               </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 

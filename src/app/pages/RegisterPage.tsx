@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { UserType } from "../types";
 import { AlertTriangle, Heart, Users } from "lucide-react";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams();
@@ -16,8 +17,14 @@ export default function RegisterPage() {
   const [type, setType] = useState<UserType>(typeParam || "volunteer");
   const [loading, setLoading] = useState(false);
 
-  const { register } = useAuth();
+  const { register, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   useEffect(() => {
     if (typeParam) {
@@ -33,7 +40,7 @@ export default function RegisterPage() {
       await register(name, email, password, phone, type, location);
       navigate("/dashboard");
     } catch (error) {
-      alert("Erro ao cadastrar. Tente novamente.");
+      toast.error("Erro ao cadastrar. Verifique os dados ou se o e-mail já está em uso.");
     } finally {
       setLoading(false);
     }

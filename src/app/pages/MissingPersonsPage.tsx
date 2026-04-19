@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { mockMissingPersons } from "../data/mockData";
 import { MissingPerson, MissingType } from "../types";
+import { api } from "../services/api";
 import {
   Search,
   MapPin,
@@ -11,21 +11,23 @@ import {
   Dog,
   Plus,
   Phone,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 
-const typeIcons = {
+const typeIcons: Record<MissingType, any> = {
   person: User,
   child: Baby,
   animal: Dog,
 };
 
-const typeLabels = {
+const typeLabels: Record<MissingType, string> = {
   person: "Pessoa",
   child: "Criança",
   animal: "Animal",
 };
 
-const typeColors = {
+const typeColors: Record<MissingType, string> = {
   person: "bg-blue-100 text-blue-800",
   child: "bg-orange-100 text-orange-800",
   animal: "bg-green-100 text-green-800",
@@ -33,8 +35,8 @@ const typeColors = {
 
 export default function MissingPersonsPage() {
   const { user } = useAuth();
-  const [missingPersons, setMissingPersons] =
-    useState<MissingPerson[]>(mockMissingPersons);
+  const [missingPersons, setMissingPersons] = useState<MissingPerson[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<"all" | MissingType>("all");
 
@@ -48,47 +50,81 @@ export default function MissingPersonsPage() {
     reporterPhone: user?.phone || "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const newMissing: MissingPerson = {
-      id: Date.now().toString(),
-      reportedBy: user?.name || "",
-      reporterPhone: formData.reporterPhone,
-      name: formData.name,
-      age: formData.age ? parseInt(formData.age) : undefined,
-      type: formData.type,
-      description: formData.description,
-      lastSeenLocation: formData.lastSeenLocation,
-      lastSeenDate: new Date(formData.lastSeenDate),
-      status: "missing",
-      createdAt: new Date(),
+  useEffect(() => {
+    const fetchMissingPersons = async () => {
+      try {
+        const data = await api.missingPersons.list();
+        const missingPersonsData = data.missingPersons || [];
+        setMissingPersons(Array.isArray(missingPersonsData) ? missingPersonsData : []);
+      } catch (error) {
+        console.error("Erro ao buscar desaparecidos:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setMissingPersons((prev) => [newMissing, ...prev]);
-    setFormData({
-      name: "",
-      age: "",
-      type: "person",
-      description: "",
-      lastSeenLocation: "",
-      lastSeenDate: "",
-      reporterPhone: user?.phone || "",
-    });
-    setShowForm(false);
-    alert("Registro de desaparecido cadastrado com sucesso!");
+    fetchMissingPersons();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const newMissing = await api.missingPersons.create({
+        reportedBy: user?.id || "",
+        reportedByName: user?.name || "",
+        reporterPhone: formData.reporterPhone,
+        name: formData.name,
+        age: formData.age ? parseInt(formData.age) : undefined,
+        type: formData.type,
+        description: formData.description,
+        lastSeenLocation: formData.lastSeenLocation,
+        lastSeenDate: new Date(formData.lastSeenDate),
+        status: "missing",
+      });
+
+      setMissingPersons((prev: MissingPerson[]) => [newMissing, ...prev]);
+      setFormData({
+        name: "",
+        age: "",
+        type: "person",
+        description: "",
+        lastSeenLocation: "",
+        lastSeenDate: "",
+        reporterPhone: user?.phone || "",
+      });
+      setShowForm(false);
+      toast.success("Registro de desaparecido cadastrado com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao cadastrar registro. Tente novamente.");
+    }
   };
 
   const filteredMissing = missingPersons
-    .filter((mp) => filter === "all" || mp.type === filter)
-    .filter((mp) => mp.status === "missing");
+    .filter((mp: MissingPerson) => filter === "all" || mp.type === filter)
+    .filter((mp: MissingPerson) => mp.status === "missing");
 
-  const handleMarkFound = (id: string) => {
-    setMissingPersons((prev) =>
-      prev.map((mp) => (mp.id === id ? { ...mp, status: "found" } : mp)),
-    );
-    alert("Marcado como encontrado! A família será notificada.");
+  const handleMarkFound = async (id: string) => {
+    try {
+      await api.missingPersons.update(id, { status: "found" });
+      setMissingPersons((prev: MissingPerson[]) =>
+        prev.map((mp: MissingPerson) =>
+          mp.id === id ? { ...mp, status: "found" } : mp,
+        ),
+      );
+      toast.success("Marcado como encontrado! A família será notificada.");
+    } catch (error) {
+      toast.error("Erro ao atualizar status. Tente novamente.");
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -108,7 +144,7 @@ export default function MissingPersonsPage() {
         <div className="grid md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-orange-600">
-              {missingPersons.filter((mp) => mp.status === "missing").length}
+              {missingPersons.filter((mp: MissingPerson) => mp.status === "missing").length}
             </div>
             <div className="text-sm text-gray-600">Casos Ativos</div>
           </div>
@@ -116,7 +152,7 @@ export default function MissingPersonsPage() {
             <div className="text-2xl font-bold text-blue-600">
               {
                 missingPersons.filter(
-                  (mp) => mp.type === "person" && mp.status === "missing",
+                  (mp: MissingPerson) => mp.type === "person" && mp.status === "missing",
                 ).length
               }
             </div>
@@ -126,7 +162,7 @@ export default function MissingPersonsPage() {
             <div className="text-2xl font-bold text-pink-600">
               {
                 missingPersons.filter(
-                  (mp) => mp.type === "child" && mp.status === "missing",
+                  (mp: MissingPerson) => mp.type === "child" && mp.status === "missing",
                 ).length
               }
             </div>
@@ -136,7 +172,7 @@ export default function MissingPersonsPage() {
             <div className="text-2xl font-bold text-green-600">
               {
                 missingPersons.filter(
-                  (mp) => mp.type === "animal" && mp.status === "missing",
+                  (mp: MissingPerson) => mp.type === "animal" && mp.status === "missing",
                 ).length
               }
             </div>
@@ -218,7 +254,7 @@ export default function MissingPersonsPage() {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 gap-4">
-              {filteredMissing.map((missing) => {
+              {filteredMissing.map((missing: MissingPerson) => {
                 const Icon = typeIcons[missing.type];
                 return (
                   <div
@@ -264,7 +300,7 @@ export default function MissingPersonsPage() {
                           </p>
                           <div className="flex items-center gap-2 text-sm font-medium">
                             <Phone className="w-4 h-4 text-blue-600" />
-                            <span>{missing.reportedBy}</span>
+                            <span>{missing.reportedByName || "Anônimo"}</span>
                             <span className="text-gray-400">•</span>
                             <span>{missing.reporterPhone}</span>
                           </div>
@@ -293,8 +329,8 @@ export default function MissingPersonsPage() {
                 <label className="block text-sm font-medium mb-2">Tipo</label>
                 <select
                   value={formData.type}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setFormData((prev: any) => ({
                       ...prev,
                       type: e.target.value as MissingType,
                     }))
@@ -315,8 +351,8 @@ export default function MissingPersonsPage() {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData((prev: any) => ({ ...prev, name: e.target.value }))
                   }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
@@ -331,8 +367,8 @@ export default function MissingPersonsPage() {
                   <input
                     type="number"
                     value={formData.age}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, age: e.target.value }))
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev: any) => ({ ...prev, age: e.target.value }))
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     min="0"
@@ -347,8 +383,8 @@ export default function MissingPersonsPage() {
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setFormData((prev: any) => ({
                       ...prev,
                       description: e.target.value,
                     }))
@@ -367,8 +403,8 @@ export default function MissingPersonsPage() {
                 <input
                   type="text"
                   value={formData.lastSeenLocation}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData((prev: any) => ({
                       ...prev,
                       lastSeenLocation: e.target.value,
                     }))
@@ -386,8 +422,8 @@ export default function MissingPersonsPage() {
                 <input
                   type="datetime-local"
                   value={formData.lastSeenDate}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData((prev: any) => ({
                       ...prev,
                       lastSeenDate: e.target.value,
                     }))
@@ -404,8 +440,8 @@ export default function MissingPersonsPage() {
                 <input
                   type="tel"
                   value={formData.reporterPhone}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData((prev: any) => ({
                       ...prev,
                       reporterPhone: e.target.value,
                     }))
@@ -438,3 +474,4 @@ export default function MissingPersonsPage() {
     </div>
   );
 }
+

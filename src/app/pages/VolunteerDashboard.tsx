@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { mockNeeds } from "../data/mockData";
 import { Need, UrgencyLevel } from "../types";
-import { AlertTriangle, Phone, MapPin, Clock, CheckCircle } from "lucide-react";
+import { api } from "../services/api";
+import {
+  AlertTriangle,
+  Phone,
+  MapPin,
+  Clock,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
 const urgencyColors: Record<UrgencyLevel, string> = {
   critical: "bg-red-100 text-red-800 border-red-300",
@@ -20,29 +27,123 @@ const urgencyLabels: Record<UrgencyLevel, string> = {
 
 export default function VolunteerDashboard() {
   const { user } = useAuth();
-  const [needs, setNeeds] = useState<Need[]>(mockNeeds);
+  const [needs, setNeeds] = useState<Need[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | UrgencyLevel>("all");
   const [selectedNeed, setSelectedNeed] = useState<Need | null>(null);
 
-  const filteredNeeds = needs
-    .filter((need) => filter === "all" || need.urgency === filter)
-    .filter((need) => need.status === "pending")
-    .sort((a, b) => {
-      const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-      return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
-    });
+  const [volunteerId, setVolunteerId] = useState<string | null>(null);
 
-  const handleOfferHelp = (needId: string) => {
-    setNeeds((prev) =>
-      prev.map((need) =>
-        need.id === needId
-          ? { ...need, status: "in-progress", volunteerId: user?.id }
-          : need,
-      ),
-    );
-    setSelectedNeed(null);
-    alert("Você se ofereceu para ajudar! A pessoa será notificada.");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [needsData, volunteersResponse] = await Promise.all([
+          api.needs.list(),
+          api.volunteers.list(),
+        ]);
+        
+        const allNeeds = needsData.needs || [];
+        setNeeds(allNeeds);
+
+        const allVolunteers = volunteersResponse.volunteers || [];
+        
+        if (user) {
+          const myProfile = allVolunteers.find((v: any) => v.userId === user.id);
+          if (myProfile) {
+            setVolunteerId(myProfile.id);
+          } else if (user.type === "volunteer") {
+            // Se for voluntário mas não tiver perfil, tenta criar um básico
+            try {
+              const newProfile = await api.volunteers.register({
+                userId: user.id,
+                name: user.name,
+                location: user.location,
+                phone: user.phone,
+                skills: ["Ajuda Geral"],
+                availability: "Disponível",
+                status: "available",
+              });
+              setVolunteerId(newProfile.id);
+            } catch (err) {
+              console.error("Erro ao criar perfil de voluntário:", err);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
+
+  const filteredNeeds = Array.isArray(needs)
+    ? needs
+        .filter((need: Need) => filter === "all" || need.urgency === filter)
+        .filter((need: Need) => need.status === "pending")
+        .sort((a: Need, b: Need) => {
+          const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+          return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+        })
+    : [];
+
+  const handleOfferHelp = async (needId: string) => {
+    if (!volunteerId) {
+      toast.error("Seu perfil de voluntário não foi encontrado. Tente recarregar a página.");
+      return;
+    }
+
+    try {
+      await api.helpRequests.create({
+        needId,
+        volunteerId,
+        message: "Olá, gostaria de ajudar com esta necessidade.",
+      });
+
+      // Persiste a mudança de status na necessidade
+      await api.needs.update(needId, { 
+        status: "in-progress", 
+        volunteerId: volunteerId
+      });
+
+      // Atualiza o estado local
+      setNeeds((prev: Need[]) =>
+        prev.map((need: Need) =>
+          need.id === needId
+            ? { ...need, status: "in-progress", volunteerId: volunteerId }
+            : need,
+        ),
+      );
+      setSelectedNeed(null);
+      toast.success("Você se ofereceu para ajudar! A pessoa será notificada.");
+    } catch (error) {
+      toast.error("Erro ao enviar oferta de ajuda. Tente novamente.");
+    }
   };
+
+  const handleCompleteHelp = async (needId: string) => {
+    try {
+      await api.needs.update(needId, { status: "resolved" });
+      setNeeds((prev: Need[]) =>
+        prev.map((need: Need) =>
+          need.id === needId ? { ...need, status: "resolved" } : need,
+        ),
+      );
+      toast.success("Ajuda marcada como concluída! Obrigado por sua dedicação.");
+    } catch (error) {
+      toast.error("Erro ao atualizar status. Tente novamente.");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -57,16 +158,17 @@ export default function VolunteerDashboard() {
         <div className="grid md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-blue-600">
-              {needs.filter((n) => n.status === "pending").length}
+              {Array.isArray(needs) ? needs.filter((n: Need) => n.status === "pending").length : 0}
             </div>
             <div className="text-sm text-gray-600">Necessidades Ativas</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-red-600">
               {
-                needs.filter(
-                  (n) => n.urgency === "critical" && n.status === "pending",
-                ).length
+                Array.isArray(needs) ? needs.filter(
+                  (n: Need) =>
+                    n.urgency === "critical" && n.status === "pending",
+                ).length : 0
               }
             </div>
             <div className="text-sm text-gray-600">Casos Críticos</div>
@@ -74,10 +176,10 @@ export default function VolunteerDashboard() {
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-green-600">
               {
-                needs.filter(
-                  (n) =>
-                    n.status === "in-progress" && n.volunteerId === user?.id,
-                ).length
+                Array.isArray(needs) ? needs.filter(
+                  (n: Need) =>
+                    n.status === "in-progress" && n.volunteerId === volunteerId,
+                ).length : 0
               }
             </div>
             <div className="text-sm text-gray-600">Você Está Ajudando</div>
@@ -85,9 +187,10 @@ export default function VolunteerDashboard() {
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-purple-600">
               {
-                needs.filter(
-                  (n) => n.status === "resolved" && n.volunteerId === user?.id,
-                ).length
+                Array.isArray(needs) ? needs.filter(
+                  (n: Need) =>
+                    n.status === "resolved" && n.volunteerId === volunteerId,
+                ).length : 0
               }
             </div>
             <div className="text-sm text-gray-600">Ajudas Concluídas</div>
@@ -150,6 +253,52 @@ export default function VolunteerDashboard() {
           </div>
         </div>
 
+        <div className="space-y-4 mb-12">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Clock className="w-6 h-6 text-blue-600" />
+            Minhas Ajudas em Andamento ({needs.filter((n: Need) => n.status === "in-progress" && n.volunteerId === volunteerId).length})
+          </h2>
+          {needs.filter((n: Need) => n.status === "in-progress" && n.volunteerId === volunteerId).length === 0 ? (
+            <p className="text-gray-500 italic">Você não tem ajudas em andamento.</p>
+          ) : (
+            needs.filter((n: Need) => n.status === "in-progress" && n.volunteerId === volunteerId).map((need: Need) => (
+              <div key={need.id} className="bg-blue-50 border border-blue-200 rounded-lg p-6 flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold text-lg">{need.userName}</h3>
+                  <p className="text-blue-800">{need.category}</p>
+                  <p className="text-sm text-gray-600">{need.description}</p>
+                </div>
+                <button
+                  onClick={() => handleCompleteHelp(need.id)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition"
+                >
+                  Marcar como Concluída
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="space-y-4 mb-12">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <CheckCircle className="w-6 h-6 text-green-600" />
+            Ajudas Concluídas ({needs.filter((n: Need) => n.status === "resolved" && n.volunteerId === volunteerId).length})
+          </h2>
+          {needs.filter((n: Need) => n.status === "resolved" && n.volunteerId === volunteerId).length === 0 ? (
+            <p className="text-gray-500 italic">Você ainda não concluiu nenhuma ajuda.</p>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              {needs.filter((n: Need) => n.status === "resolved" && n.volunteerId === volunteerId).map((need: Need) => (
+                <div key={need.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4 opacity-75">
+                  <h3 className="font-bold">{need.userName}</h3>
+                  <p className="text-sm text-gray-600">{need.category}</p>
+                  <p className="text-xs text-green-600 font-semibold mt-2">✓ CONCLUÍDA</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="space-y-4">
           <h2 className="text-xl font-bold mb-4">
             Necessidades Disponíveis ({filteredNeeds.length})
@@ -159,7 +308,7 @@ export default function VolunteerDashboard() {
               Nenhuma necessidade encontrada com este filtro.
             </div>
           ) : (
-            filteredNeeds.map((need) => (
+            filteredNeeds.map((need: Need) => (
               <div
                 key={need.id}
                 className="bg-white rounded-lg shadow hover:shadow-lg transition"

@@ -1,8 +1,8 @@
-export type UserType = 'volunteer' | 'need-help';
+export type UserType = "volunteer" | "need-help";
 
-export type UrgencyLevel = 'critical' | 'high' | 'medium' | 'low';
+export type UrgencyLevel = "critical" | "high" | "medium" | "low";
 
-export type MissingType = 'person' | 'child' | 'animal';
+export type MissingType = "person" | "child" | "animal";
 
 export interface User {
   id: string;
@@ -23,7 +23,7 @@ export interface Need {
   category: string;
   description: string;
   urgency: UrgencyLevel;
-  status: 'pending' | 'in-progress' | 'resolved';
+  status: "pending" | "in-progress" | "resolved";
   createdAt: Date;
   volunteerId?: string;
 }
@@ -36,13 +36,14 @@ export interface Volunteer {
   phone: string;
   skills: string[];
   availability: string;
-  status: 'available' | 'busy';
+  status: "available" | "busy";
   helpedCount: number;
 }
 
 export interface MissingPerson {
   id: string;
   reportedBy: string;
+  reportedByName?: string;
   reporterPhone: string;
   name: string;
   age?: number;
@@ -51,7 +52,7 @@ export interface MissingPerson {
   lastSeenLocation: string;
   lastSeenDate: Date;
   photoUrl?: string;
-  status: 'missing' | 'found';
+  status: "missing" | "found";
   createdAt: Date;
 }
 
@@ -61,6 +62,6 @@ export interface HelpRequest {
   volunteerId: string;
   volunteerName: string;
   message: string;
-  status: 'pending' | 'accepted' | 'declined';
+  status: "pending" | "accepted" | "declined";
   createdAt: Date;
 }

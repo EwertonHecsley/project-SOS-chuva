@@ -1,10 +1,6 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-} from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { User, UserType } from "../types";
+import { api } from "../services/api";
 
 interface AuthContextType {
   user: User | null;
@@ -19,34 +15,45 @@ interface AuthContextType {
   ) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(
-  undefined,
-);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = async (email: string, password: string) => {
-    // Mock login - em produção isso seria uma chamada ao Supabase
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  useEffect(() => {
+    const recoverSession = async () => {
+      const token = localStorage.getItem("sos-chuva-token");
+      const userId = localStorage.getItem("sos-chuva-user-id");
 
-    const mockUser: User = {
-      id: "1",
-      name: "Usuário Teste",
-      email,
-      phone: "(51) 99999-9999",
-      type: "volunteer",
-      location: "Porto Alegre, RS",
-      createdAt: new Date(),
+      if (token && userId) {
+        try {
+          const userData = await api.users.getProfile(userId);
+          setUser(userData);
+        } catch (error) {
+          console.error("Erro ao recuperar sessão:", error);
+          logout();
+        }
+      }
+      setIsLoading(false);
     };
 
-    setUser(mockUser);
+    recoverSession();
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    const response = await api.auth.login({ email, password });
+    
+    const token = response.token;
+    const userData = response.user || response;
+    
+    if (token) localStorage.setItem("sos-chuva-token", token);
+    if (userData?.id) localStorage.setItem("sos-chuva-user-id", userData.id);
+    
+    setUser(userData);
   };
 
   const register = async (
@@ -57,23 +64,44 @@ export function AuthProvider({
     type: UserType,
     location: string,
   ) => {
-    // Mock register - em produção isso seria uma chamada ao Supabase
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const newUser: User = {
-      id: Math.random().toString(36).substr(2, 9),
+    const response = await api.auth.register({
       name,
       email,
+      password,
       phone,
       type,
       location,
-      createdAt: new Date(),
-    };
+    });
 
-    setUser(newUser);
+    const token = response.token;
+    const userData = response.user || response;
+    
+    if (token) localStorage.setItem("sos-chuva-token", token);
+    if (userData?.id) localStorage.setItem("sos-chuva-user-id", userData.id);
+
+    // Auto-registrar perfil de voluntário se o tipo for voluntário
+    if (userData.type === "volunteer") {
+      try {
+        await api.volunteers.register({
+          userId: userData.id,
+          name: userData.name,
+          location: userData.location,
+          phone: userData.phone,
+          skills: ["Ajuda Geral"],
+          availability: "Disponível",
+          status: "available",
+        });
+      } catch (err) {
+        console.error("Erro ao auto-registrar voluntário:", err);
+      }
+    }
+    
+    setUser(userData);
   };
 
   const logout = () => {
+    localStorage.removeItem("sos-chuva-token");
+    localStorage.removeItem("sos-chuva-user-id");
     setUser(null);
   };
 
@@ -85,6 +113,7 @@ export function AuthProvider({
         register,
         logout,
         isAuthenticated: !!user,
+        isLoading,
       }}
     >
       {children}
@@ -95,9 +124,8 @@ export function AuthProvider({
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error(
-      "useAuth must be used within an AuthProvider",
-    );
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
+
